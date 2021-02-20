@@ -2,6 +2,7 @@ import importlib.util
 import json
 import unittest
 from pathlib import Path
+from enum import Enum
 
 import json_schema_to_class
 

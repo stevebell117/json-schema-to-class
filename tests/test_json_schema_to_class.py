@@ -76,7 +76,8 @@ class MyTestCase(unittest.TestCase):
             'type': 'object',
             'properties': {
                 'mode': {
-                    'enum': ['cosine', 'linear', 0]
+                    'type': "string",
+                    'enum': ['cosine', 'linear']
                 }
             }
         })

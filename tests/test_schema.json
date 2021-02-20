@@ -24,6 +24,7 @@
       "type": "object",
       "properties": {
         "lr_mode": {
+          "type": "string",
           "enum": [
             "step",
             "cos"

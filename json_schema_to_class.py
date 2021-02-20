@@ -266,6 +266,7 @@ class Parser:
 
     def generate(self, schema: dict) -> str:
         Array.use_list = False
+        Array.use_enum = False
         result = []
         for _, definition in self.definitions.items():
             result.append(definition.to_class_code(level=0))

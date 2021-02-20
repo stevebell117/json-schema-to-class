@@ -70,19 +70,20 @@ class MyTestCase(unittest.TestCase):
         self.assertTrue(True)
 
     def test_enum(self):
-        def parse_empty_definition():
-            parser = json_schema_to_class.Parser()
-            parser.parse(schema={
-                'title': 'days',
-                'type': 'object',
-                'properties': {
-                    'mode': {
-                        'enum': ['cosine', 'linear', 0]
-                    }
+        parser = json_schema_to_class.Parser()
+        parser.parse(schema={
+            'title': 'days',
+            'type': 'object',
+            'properties': {
+                'mode': {
+                    'enum': ['cosine', 'linear', 0]
                 }
-            })
+            }
+        })
 
-        self.assertRaises(AssertionError, parse_empty_definition)
+        code = parser.root.to_class_code()
+        exec(code)
+        self.assertTrue(True)
 
     def test_parse(self):
         def parse_empty_definition():

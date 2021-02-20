@@ -190,6 +190,30 @@ class Array(Model):
         return indent_class(code=code, level=level)
 
 
+class Enum(Array):
+    def __init__(self, name: str, items: type, default: Any = None):
+        super().__init__(name=name, items=items, default=default)
+        self.enumlist = items
+
+    def to_init_code(self) -> str:
+        Array.use_enum = True
+
+        return '{spaces}self.{name}: {class_name} = self.{class_name}(values.get("{name}", None))'.format(
+            spaces=spaces(2),
+            name=self.name,
+            class_name=self.class_name(),
+        )
+
+    def to_class_code(self, level: int = 0, schema: dict = None) -> str:
+        result = [f'class {self.class_name()}(Enum):']
+        self.generate_schema_code(result, schema)
+        for value in self.enumlist:
+            result.append(f'{spaces(1)}{value.capitalize()} = "{value}"')
+        self.generate_validate_code(result, schema)
+        code = Config.line_break.join(result)
+        return indent_class(code=code, level=level)
+
+
 class Parser:
     def __init__(self):
         self.definitions: Dict[str, Item] = {}
@@ -211,19 +235,20 @@ class Parser:
 
         if 'type' in schema:
             item_type = schema['type']
-            if item_type == 'object' and 'properties' in schema:
+            if 'enum' in schema:
+                Array.use_enum = True
+                enum_list = schema['enum']
+                assert len(enum_list) > 0, "Enum List is Empty"
+                first = enum_list[0]
+                assert all(type(first) == type(item) for item in enum_list), "Items in Enum List with Different Types"
+                assert type(first) in {int, float, str}, "Enum Type is not int, float or string"
+                return Enum(name=name, items=enum_list, default=default)
+            elif item_type == 'object' and 'properties' in schema:
                 return self.parse_object(name=name, schema=schema)
             elif item_type == 'array':
                 return self.parse_array(name=name, schema=schema)
             else:
                 return Basic(name=name, typename=Basic.TYPE_MAP[item_type], default=default)
-        elif 'enum' in schema:
-            enum_list = schema['enum']
-            assert len(enum_list) > 0, "Enum List is Empty"
-            first = enum_list[0]
-            assert all(type(first) == type(item) for item in enum_list), "Items in Enum List with Different Types"
-            assert type(first) in {int, float, str}, "Enum Type is not int, float or string"
-            return Basic(name=name, typename=type(first), default=default)
         elif '$ref' in schema:
             path: str = schema['$ref']
             class_type = path.split('/')[-1]
@@ -251,6 +276,8 @@ class Parser:
         headers = []
         if Array.use_list:
             headers += ['from typing import List']
+        if Array.use_enum:
+            headers += ['from enum import Enum']
         if Config.generate_validate_code:
             headers = ['import json'] + headers + ['', 'import jsonschema']
         if Config.generated_warning:

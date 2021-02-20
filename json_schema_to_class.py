@@ -198,7 +198,7 @@ class Enum(Array):
     def to_init_code(self) -> str:
         Array.use_enum = True
 
-        return '{spaces}self.{name}: {class_name} = self.{class_name}(values.get("{name}", {default}}))'.format(
+        return '{spaces}self.{name}: {class_name} = self.{class_name}(values.get("{name}", "{default}"))'.format(
             spaces=spaces(2),
             name=self.name,
             class_name=self.class_name(),

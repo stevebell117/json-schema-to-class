@@ -198,7 +198,15 @@ class Enum(Array):
     def to_init_code(self) -> str:
         Array.use_enum = True
 
-        return '{spaces}self.{name}: {class_name} = self.{class_name}(values.get("{name}", "{default}"))'.format(
+        if self.default is None:
+            return '{if_spaces}self.{name} = None\n{if_spaces}if "{name}" in values:\n{statement_spaces}self.{name} = self.{class_name}(values.get("{name}"))'.format(
+                if_spaces=spaces(2),
+                statement_spaces=spaces(3),
+                name=self.name,
+                class_name=self.class_name(),
+                default=self.default
+            )
+        return '{spaces}self.{name} = self.{class_name}(values.get("{name}", "{default}"))'.format(
             spaces=spaces(2),
             name=self.name,
             class_name=self.class_name(),
@@ -209,7 +217,11 @@ class Enum(Array):
         result = [f'class {self.class_name()}(Enum):']
         self.generate_schema_code(result, schema)
         for value in self.enumlist:
-            result.append(f'{spaces(1)}{value.capitalize()} = "{value}"')
+            if value == "NONE":
+                result.append(f'{spaces(1)}{value.lower()} = "{value}"')
+            else:
+                result.append(f'{spaces(1)}{value.capitalize()} = "{value}"')
+        result.append(f'\n{spaces(1)}def __str__(self):\n{spaces(2)}return str(self.value)')
         self.generate_validate_code(result, schema)
         code = Config.line_break.join(result)
         return indent_class(code=code, level=level)
